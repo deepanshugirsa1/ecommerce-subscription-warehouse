@@ -1,0 +1,10 @@
+version: 2
+models:
+  - name: dim_subscriptions
+    columns:
+      - name: sub_id
+        tests: [unique, not_null]
+  - name: fct_transactions
+    columns:
+      - name: txn_id
+        tests: [unique, not_null]

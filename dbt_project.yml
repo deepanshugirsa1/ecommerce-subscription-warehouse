@@ -1,0 +1,5 @@
+name: ecommerce_subscription_warehouse
+version: 1.0.0
+profile: ecommerce_wh
+model-paths: ["models"]
+seed-paths: ["seeds"]
