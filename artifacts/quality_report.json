@@ -1,0 +1,62 @@
+{
+  "status": "HEALTHY",
+  "checks_passed": 9,
+  "checks_total": 9,
+  "pass_rate": 1.0,
+  "freshness_sla_days": 420,
+  "kpis": {
+    "total_subscriptions": 600,
+    "active_subscriptions": 354,
+    "current_mrr": 12206.0,
+    "arr": 146472.0,
+    "current_arpu": 34.48,
+    "lifetime_churn_rate": 0.41
+  },
+  "checks": [
+    {
+      "check": "unique:dim_subscriptions.sub_id",
+      "status": "PASS",
+      "detail": "0 duplicate keys"
+    },
+    {
+      "check": "unique:dim_users.user_id",
+      "status": "PASS",
+      "detail": "0 duplicate keys"
+    },
+    {
+      "check": "unique:fct_transactions.txn_id",
+      "status": "PASS",
+      "detail": "0 duplicate keys"
+    },
+    {
+      "check": "unique:mart_mrr_monthly.month",
+      "status": "PASS",
+      "detail": "0 duplicate keys"
+    },
+    {
+      "check": "mrr_non_negative",
+      "status": "PASS",
+      "detail": "0 negative-MRR months"
+    },
+    {
+      "check": "retention_rate_bounds",
+      "status": "PASS",
+      "detail": "0 out-of-range rows"
+    },
+    {
+      "check": "txn_sub_referential_integrity",
+      "status": "PASS",
+      "detail": "0 orphan transactions"
+    },
+    {
+      "check": "churn_rate_sane",
+      "status": "PASS",
+      "detail": "lifetime_churn_rate=0.41"
+    },
+    {
+      "check": "freshness_sla",
+      "status": "PASS",
+      "detail": "newest txn 2025-12-01 (347d old, SLA 420d)"
+    }
+  ]
+}

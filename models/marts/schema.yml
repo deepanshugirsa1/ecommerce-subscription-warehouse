@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: dim_users
+    description: One row per user with their current subscription attributes.
+    columns:
+      - name: user_id
+        tests: [unique, not_null]
+  - name: dim_subscriptions
+    description: One row per subscription with lifecycle and tenure.
+    columns:
+      - name: sub_id
+        tests: [unique, not_null]
+      - name: user_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_users')
+              field: user_id
+  - name: dim_devices
+    columns:
+      - name: device_id
+        tests: [unique, not_null]
+  - name: fct_transactions
+    description: Grain = one payment transaction.
+    columns:
+      - name: txn_id
+        tests: [unique, not_null]
+      - name: sub_id
+        tests:
+          - relationships:
+              to: ref('dim_subscriptions')
+              field: sub_id
+      - name: user_id
+        tests:
+          - relationships:
+              to: ref('dim_users')
+              field: user_id
+  - name: mart_mrr_monthly
+    description: Grain = one calendar month of MRR movement.
+    columns:
+      - name: month
+        tests: [unique, not_null]
+      - name: active_mrr
+        tests: [not_null]
+  - name: mart_subscription_kpis
+    description: Single-row executive KPI snapshot.
+  - name: mart_retention_cohort
+    description: Grain = cohort_month x month_offset.
+  - name: mart_platform_funnel
+    columns:
+      - name: platform
+        tests: [unique, not_null]

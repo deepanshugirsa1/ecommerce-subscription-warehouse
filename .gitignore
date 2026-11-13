@@ -14,3 +14,4 @@ logs/
 *.parquet
 data/raw/*.csv
 !data/raw/.gitkeep
+.user.yml

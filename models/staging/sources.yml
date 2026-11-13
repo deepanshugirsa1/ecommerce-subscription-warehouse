@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Raw subscription-business tables landed by the lakehouse ingest.
+    schema: main
+    tables:
+      - name: users
+        identifier: raw_users
+      - name: subscriptions
+        identifier: raw_subscriptions
+      - name: subscription_events
+        identifier: raw_subscription_events
+      - name: transactions
+        identifier: raw_transactions
+      - name: devices
+        identifier: raw_devices

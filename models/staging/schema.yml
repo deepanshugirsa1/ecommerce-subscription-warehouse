@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: stg_users
+    columns:
+      - name: user_id
+        tests: [unique, not_null]
+  - name: stg_subscriptions
+    columns:
+      - name: sub_id
+        tests: [unique, not_null]
+      - name: user_id
+        tests: [not_null]
+      - name: mrr
+        tests: [not_null]
+      - name: plan
+        tests:
+          - accepted_values:
+              values: ["basic", "pro", "enterprise"]
+      - name: status
+        tests:
+          - accepted_values:
+              values: ["active", "cancelled"]
+  - name: stg_subscription_events
+    columns:
+      - name: event_id
+        tests: [unique, not_null]
+      - name: event_type
+        tests:
+          - accepted_values:
+              values: ["created", "upgraded", "downgraded", "cancelled", "reactivated"]
+  - name: stg_transactions
+    columns:
+      - name: txn_id
+        tests: [unique, not_null]
+      - name: status
+        tests:
+          - accepted_values:
+              values: ["succeeded", "failed"]
+  - name: stg_devices
+    columns:
+      - name: device_id
+        tests: [unique, not_null]
+      - name: platform
+        tests:
+          - accepted_values:
+              values: ["ios", "android", "web"]
