@@ -14,3 +14,10 @@ models:
       +materialized: view
     marts:
       +materialized: table
+
+vars:
+  # How far back an incremental run reaches. Both windows exist because
+  # upstream data is restated: subscription events can be backdated, and a
+  # payment processor can revise a settled charge for a few days.
+  scd2_lookback_days: 7
+  txn_restatement_window_days: 5

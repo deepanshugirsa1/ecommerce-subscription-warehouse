@@ -38,7 +38,8 @@ def check(name: str, passed: bool, detail: str):
 
 # 1. Primary-key uniqueness on key marts
 for model, key in [("dim_subscriptions", "sub_id"), ("dim_users", "user_id"),
-                   ("fct_transactions", "txn_id"), ("mart_mrr_monthly", "month")]:
+                   ("fct_transactions", "txn_id"), ("mart_mrr_monthly", "month"),
+                   ("dim_subscription_history", "subscription_version_key")]:
     dupes = scalar(
         f"select count(*) from (select {key} from {model} group by {key} having count(*) > 1)"
     )
@@ -59,7 +60,50 @@ orphans = scalar(
 )
 check("txn_sub_referential_integrity", orphans == 0, f"{orphans} orphan transactions")
 
-# 5. Churn rate is a sane fraction
+# 5. Type 2 history: windows must tile the timeline exactly once per subscription.
+#    Overlap double-counts revenue in every point-in-time join; a gap loses a
+#    day's charges. Neither shows up as a failure in the fact table itself.
+broken_chain = scalar("""
+    with chain as (
+        select sub_id, version, valid_from, valid_to,
+               lead(valid_from) over (partition by sub_id order by version) as next_valid_from
+        from dim_subscription_history
+    )
+    select count(*) from chain
+    where next_valid_from is not null
+      and (valid_to >= next_valid_from
+           or valid_to < valid_from
+           or valid_to + interval 1 day <> next_valid_from)
+""")
+check("scd2_contiguous_windows", broken_chain == 0,
+      f"{broken_chain} overlapping, gapped or inverted validity windows")
+
+open_versions = scalar("""
+    select count(*) from (
+        select sub_id from dim_subscription_history where is_current
+        group by sub_id having count(*) <> 1
+    )
+""")
+check("scd2_one_current_version", open_versions == 0,
+      f"{open_versions} subscriptions without exactly one open version")
+
+# 6. Point-in-time attribution: every charge lands inside some version window,
+#    and lands in exactly one (a fan-out would inflate plan-level revenue).
+unattributed = scalar("select count(*) from fct_transactions where subscription_version_key is null")
+check("txn_point_in_time_attributed", unattributed == 0,
+      f"{unattributed} charges outside every validity window")
+
+restated = scalar("""
+    select count(*) from fct_transactions t
+    join (select sub_id, plan from dim_subscription_history where is_current) cur
+      on cur.sub_id = t.sub_id
+    where t.plan_at_txn is not null and t.plan_at_txn <> cur.plan
+""")
+check("scd2_attribution_differs_from_current", restated > 0,
+      f"{restated} charges attributed to a plan other than the current one "
+      f"(these are the rows a Type 1 dimension gets wrong)")
+
+# 7. Churn rate is a sane fraction
 churn = scalar("select lifetime_churn_rate from mart_subscription_kpis")
 check("churn_rate_sane", 0 <= churn <= 1, f"lifetime_churn_rate={churn}")
 
