@@ -49,11 +49,7 @@ streamlit run app/dashboard.py          # self-service dashboard
 
 - **600** subscriptions (**354** active), lifetime churn **41%**
 - **Current MRR $12,206** · **ARR $146,472** · **ARPU $34.48**
-- dbt: **52 passed** (9 models, 36 tests, 7 views) · quality gates **9/9 HEALTHY** · freshness **PASS**
-
-> These figures are from the run before `dim_subscription_history` and the
-> incremental fact table were added; the model, test and gate counts are all
-> higher now. Run `python run_demo.py` to refresh them.
+- dbt: **70 passed** (10 models, 53 tests, 7 views) · quality gates **14/14 HEALTHY** · freshness **PASS**
 
 See [docs/01_metric_definitions.md](docs/01_metric_definitions.md) and
 [docs/02_data_dictionary.md](docs/02_data_dictionary.md).
