@@ -21,11 +21,60 @@ models:
     columns:
       - name: device_id
         tests: [unique, not_null]
+  - name: dim_subscription_history
+    description: >
+      Slowly changing dimension, Type 2. Grain = one subscription version,
+      valid between the event that opened it and the event that superseded it.
+      Join facts on `date between valid_from and valid_to` to attribute them to
+      the plan in force at the time rather than the plan in force today.
+    columns:
+      - name: subscription_version_key
+        description: Surrogate key, sub_id plus zero-padded version number.
+        tests: [unique, not_null]
+      - name: sub_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_subscriptions')
+              field: sub_id
+      - name: version
+        tests: [not_null]
+      - name: plan
+        tests:
+          - not_null
+          - accepted_values: { values: ['basic', 'pro', 'enterprise'] }
+      - name: status
+        tests:
+          - accepted_values: { values: ['active', 'cancelled'] }
+      - name: opened_at
+        description: The true date of the event that opened this version.
+        tests: [not_null]
+      - name: valid_from
+        description: >
+          Start of the validity window. Version 1 is anchored at 1900-01-01 so
+          no fact can fall before the chain begins; later versions start on
+          their event date.
+        tests: [not_null]
+      - name: valid_to
+        tests: [not_null]
+      - name: is_current
+        tests: [not_null]
   - name: fct_transactions
-    description: Grain = one payment transaction.
+    description: >
+      Grain = one payment transaction, attributed to the subscription version in
+      force on its settlement date. Incremental, with a trailing restatement
+      window.
     columns:
       - name: txn_id
         tests: [unique, not_null]
+      - name: subscription_version_key
+        tests:
+          - relationships:
+              to: ref('dim_subscription_history')
+              field: subscription_version_key
+      - name: plan_at_txn
+        tests:
+          - accepted_values: { values: ['basic', 'pro', 'enterprise'] }
       - name: sub_id
         tests:
           - relationships:

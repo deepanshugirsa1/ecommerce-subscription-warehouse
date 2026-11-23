@@ -4,6 +4,10 @@ Models a SaaS/membership subscription business: users sign up on a plan, pay a
 recurring monthly charge, may upgrade/downgrade, and may churn. The output raw
 CSVs feed the lakehouse ingest + dbt marts (MRR, churn, ARPU, retention).
 
+Each subscription event carries the plan in force *after* it, which is what
+makes a Type 2 history of the subscription dimension reconstructable from the
+event stream rather than inferred from a price lookup.
+
 Run: python data/generate_data.py
 """
 from __future__ import annotations
@@ -87,6 +91,7 @@ for i in range(N_USERS):
             "user_id": user_id,
             "event_type": "created",
             "event_date": started.isoformat(),
+            "plan": plan,
             "mrr_change": round(mrr, 2),
         }
     )
@@ -103,6 +108,7 @@ for i in range(N_USERS):
                 "user_id": user_id,
                 "event_type": event_type,
                 "event_date": change_date.isoformat(),
+                "plan": new_plan,
                 "mrr_change": round(PLAN_PRICE[new_plan] - mrr, 2),
             }
         )
@@ -121,6 +127,7 @@ for i in range(N_USERS):
                 "user_id": user_id,
                 "event_type": "cancelled",
                 "event_date": cancelled.isoformat(),
+                "plan": plan,
                 "mrr_change": round(-mrr, 2),
             }
         )

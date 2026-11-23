@@ -62,3 +62,28 @@
 | `mart_subscription_kpis` | snapshot | Single-row executive KPIs |
 | `mart_retention_cohort` | cohort × offset | Cohort retention curve |
 | `mart_platform_funnel` | platform | Device + payment-success breakdown |
+
+## dim_subscription_history (SCD Type 2)
+
+Grain: one subscription **version**. A new version opens on every subscription
+event (created, upgraded, downgraded, cancelled) and the previous one closes
+the day before.
+
+| Column | Type | Notes |
+|---|---|---|
+| `subscription_version_key` | varchar | Surrogate key: `sub_id` + zero-padded version. Unique. |
+| `sub_id` | varchar | Business key. FK to `dim_subscriptions`. |
+| `version` | integer | 1-based, ordered by event date then event id. |
+| `opened_by_event_id` | varchar | The event that opened this version. |
+| `opened_by_event_type` | varchar | `created`, `upgraded`, `downgraded`, `cancelled`. |
+| `plan` | varchar | Plan in force during this version. |
+| `mrr` | double | Running MRR after the opening event. |
+| `status` | varchar | `cancelled` if opened by a cancellation, else `active`. |
+| `opened_at` | date | True date of the opening event. |
+| `valid_from` | date | Window start. **Version 1 is anchored at 1900-01-01** so no fact falls before the chain. |
+| `valid_to` | date | Last day in force; `9999-12-31` while current. |
+| `is_current` | boolean | Exactly one true row per `sub_id`. |
+| `opened_at_month` | date | Month floor of `opened_at`. |
+
+Join facts with `fact_date between valid_from and valid_to`. The chain tiles
+the timeline exactly once per subscription, which the singular tests enforce.
